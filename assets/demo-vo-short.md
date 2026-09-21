@@ -4,4 +4,6 @@
 
 Fiverr ≤75s / Upwork / YouTube short **同一成片**即可；不必再维护更短精简稿。
 
+口播必点：`trace_id` ≠ correlation（与完整版同句）；短版闪切见分镜 **S-P2**。
+
 若以后要 ≤60s 超短 hook，再从 full 的 Continuous 段砍 Terminal + Prom 即可。
