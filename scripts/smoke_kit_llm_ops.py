@@ -111,26 +111,27 @@ def step_static(doc: Path) -> None:
         _ok(f"static {rel} score hooks")
 
     if not doc.is_dir():
-        raise Fail(f"DOC_WORKFLOW_PATH missing: {doc}")
+        # Standalone kit CI has no doc-workflow checkout.
+        _warn(f"DOC_WORKFLOW_PATH missing ({doc}) — skip doc file asserts")
+    else:
+        scores = doc / "python-service" / "scores.py"
+        if not scores.is_file():
+            raise Fail(f"missing doc reference scores.py: {scores}")
+        src = scores.read_text(encoding="utf-8")
+        for needle in (
+            "doc.validation_passed",
+            "correlation_id",
+            "create_score",
+            "langfuse_disabled",
+        ):
+            if needle not in src:
+                raise Fail(f"doc scores.py missing {needle}")
+        _ok("static doc scores.py reference present")
 
-    scores = doc / "python-service" / "scores.py"
-    if not scores.is_file():
-        raise Fail(f"missing doc reference scores.py: {scores}")
-    src = scores.read_text(encoding="utf-8")
-    for needle in (
-        "doc.validation_passed",
-        "correlation_id",
-        "create_score",
-        "langfuse_disabled",
-    ):
-        if needle not in src:
-            raise Fail(f"doc scores.py missing {needle}")
-    _ok("static doc scores.py reference present")
-
-    addendum = doc / "docs" / "zh" / "PHASE2_LANGFUSE_ADDENDUM.md"
-    if not addendum.is_file():
-        raise Fail(f"missing deeper sample: {addendum}")
-    _ok("static doc PHASE2_LANGFUSE_ADDENDUM present (deeper sample, not rebuilt)")
+        addendum = doc / "docs" / "zh" / "PHASE2_LANGFUSE_ADDENDUM.md"
+        if not addendum.is_file():
+            raise Fail(f"missing deeper sample: {addendum}")
+        _ok("static doc PHASE2_LANGFUSE_ADDENDUM present (deeper sample, not rebuilt)")
 
     if DEFAULT_GATE_MODE is not GateMode.SHADOW:
         raise Fail("kit DEFAULT_GATE_MODE drifted from shadow")

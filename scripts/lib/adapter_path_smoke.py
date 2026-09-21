@@ -88,44 +88,46 @@ def step_static_adapter(
         ok(f"static kit {rel}")
 
     if not sibling.is_dir():
-        raise Fail(f"sibling path missing: {sibling}")
+        # Standalone kit CI (GitHub Actions) has no sibling checkout — kit docs
+        # above still ran; sibling file asserts are local/lindev-only.
+        warn(f"sibling missing ({sibling}) — skip vertical file asserts ({smoke_name})")
+    else:
+        env_ex = (sibling / ".env.example").read_text(encoding="utf-8")
+        if "OBS_QUALITY_GATE_MODE=shadow" not in env_ex:
+            raise Fail(f"{sibling.name} .env.example missing OBS_QUALITY_GATE_MODE=shadow")
+        ok(f"static {sibling.name} .env.example gate=shadow")
 
-    env_ex = (sibling / ".env.example").read_text(encoding="utf-8")
-    if "OBS_QUALITY_GATE_MODE=shadow" not in env_ex:
-        raise Fail(f"{sibling.name} .env.example missing OBS_QUALITY_GATE_MODE=shadow")
-    ok(f"static {sibling.name} .env.example gate=shadow")
+        compose = (sibling / "docker" / "compose.yml").read_text(encoding="utf-8")
+        if "OBS_QUALITY_GATE_MODE" not in compose:
+            raise Fail(f"{sibling.name} docker/compose.yml missing OBS_QUALITY_GATE_MODE")
+        ok(f"static {sibling.name} compose injects OBS_QUALITY_GATE_MODE")
 
-    compose = (sibling / "docker" / "compose.yml").read_text(encoding="utf-8")
-    if "OBS_QUALITY_GATE_MODE" not in compose:
-        raise Fail(f"{sibling.name} docker/compose.yml missing OBS_QUALITY_GATE_MODE")
-    ok(f"static {sibling.name} compose injects OBS_QUALITY_GATE_MODE")
+        qg = sibling / "python-service" / "quality_gate.py"
+        if not qg.is_file():
+            raise Fail(f"missing thin adapter module: {qg}")
+        qg_src = qg.read_text(encoding="utf-8")
+        if "DEFAULT_GATE_MODE" not in qg_src or "shadow" not in qg_src.lower():
+            raise Fail("quality_gate.py must default to shadow")
+        if "should_block_writes" not in qg_src:
+            raise Fail("quality_gate.py must expose should_block_writes")
+        ok(f"static {sibling.name} quality_gate.py present")
 
-    qg = sibling / "python-service" / "quality_gate.py"
-    if not qg.is_file():
-        raise Fail(f"missing thin adapter module: {qg}")
-    qg_src = qg.read_text(encoding="utf-8")
-    if "DEFAULT_GATE_MODE" not in qg_src or "shadow" not in qg_src.lower():
-        raise Fail("quality_gate.py must default to shadow")
-    if "should_block_writes" not in qg_src:
-        raise Fail("quality_gate.py must expose should_block_writes")
-    ok(f"static {sibling.name} quality_gate.py present")
+        main_src = (sibling / "python-service" / "main.py").read_text(encoding="utf-8")
+        for needle in (
+            "obs_quality_gate_mode",
+            "obs_quality_gate_blocks_writes",
+            "current_gate_mode",
+        ):
+            if needle not in main_src:
+                raise Fail(f"{sibling.name} /health adapter missing {needle} in main.py")
+        ok(f"static {sibling.name} /health exposes gate fields")
 
-    main_src = (sibling / "python-service" / "main.py").read_text(encoding="utf-8")
-    for needle in (
-        "obs_quality_gate_mode",
-        "obs_quality_gate_blocks_writes",
-        "current_gate_mode",
-    ):
-        if needle not in main_src:
-            raise Fail(f"{sibling.name} /health adapter missing {needle} in main.py")
-    ok(f"static {sibling.name} /health exposes gate fields")
-
-    obs_zh = sibling / "docs" / "zh" / "OBSERVABILITY.md"
-    if obs_zh.is_file():
-        obs_text = obs_zh.read_text(encoding="utf-8")
-        if adapter_stem not in obs_text and "obs-quality-kit" not in obs_text.lower():
-            raise Fail(f"{sibling.name} docs/zh/OBSERVABILITY.md should link kit adapter")
-        ok(f"static {sibling.name} OBSERVABILITY links kit")
+        obs_zh = sibling / "docs" / "zh" / "OBSERVABILITY.md"
+        if obs_zh.is_file():
+            obs_text = obs_zh.read_text(encoding="utf-8")
+            if adapter_stem not in obs_text and "obs-quality-kit" not in obs_text.lower():
+                raise Fail(f"{sibling.name} docs/zh/OBSERVABILITY.md should link kit adapter")
+            ok(f"static {sibling.name} OBSERVABILITY links kit")
 
     if DEFAULT_GATE_MODE is not GateMode.SHADOW:
         raise Fail("kit contract DEFAULT_GATE_MODE drifted from shadow")
