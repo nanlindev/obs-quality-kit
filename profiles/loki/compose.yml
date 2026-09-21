@@ -1,0 +1,57 @@
+# Kit-owned Loki stack (compose profile: loki)
+# Standalone L1 addon — may co-run with metrics; NOT folded into full (8GB hosts).
+# Project: obs-quality-kit-loki (separate from metrics — never share + --remove-orphans)
+# Review-P2-4: Promtail mounts docker.sock — see docs/*/LOKI.md
+
+name: obs-quality-kit-loki
+
+services:
+  loki:
+    image: grafana/loki:2.9.4
+    profiles: ["loki"]
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes:
+      - ./loki-config.yml:/etc/loki/local-config.yaml:ro
+      - obs_kit_loki_data:/loki
+    ports:
+      - "${OBS_UI_BIND:-127.0.0.1}:${OBS_LOKI_PORT:-3100}:3100"
+    networks:
+      - proxy_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3100/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    labels:
+      com.obsquality.kit: "true"
+      com.obsquality.kit.component: "loki"
+
+  promtail:
+    image: grafana/promtail:2.9.4
+    profiles: ["loki"]
+    restart: unless-stopped
+    command: ["-config.file=/etc/promtail/config.yml"]
+    volumes:
+      - ./promtail-config.yml:/etc/promtail/config.yml:ro
+      # Docker socket: scrape container logs. Risk → docs/*/LOKI.md (Review-P2-4).
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      loki:
+        condition: service_healthy
+    networks:
+      - proxy_network
+    labels:
+      com.obsquality.kit: "true"
+      com.obsquality.kit.component: "promtail"
+
+volumes:
+  # Pin legacy name so renaming the compose project keeps prior Loki data.
+  obs_kit_loki_data:
+    name: obs-quality-kit_obs_kit_loki_data
+
+networks:
+  proxy_network:
+    external: true
+    name: proxy_network

@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" role="img" aria-label="OBS Quality Kit architecture">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#14181f"/>
+      <stop offset="100%" stop-color="#1c232e"/>
+    </linearGradient>
+    <marker id="arrowTeal" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#2dd4bf"/>
+    </marker>
+    <marker id="arrowAmber" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <circle cx="1100" cy="80" r="180" fill="#2dd4bf" opacity="0.05"/>
+  <circle cx="160" cy="620" r="140" fill="#f59e0b" opacity="0.04"/>
+
+  <text x="640" y="52" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="28" font-weight="700" fill="#f8fafc">OBS Quality Kit</text>
+  <text x="640" y="82" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="15" fill="#94a3b8">The cross-cut that ties my n8n portfolio together � Base + optional Addons</text>
+
+  <!-- LEFT: MY STACK -->
+  <text x="120" y="130" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="600" fill="#64748b" letter-spacing="1.5">MY STACK</text>
+
+  <rect x="48" y="150" width="280" height="88" rx="12" fill="#232a35" stroke="#2dd4bf" stroke-width="2"/>
+  <text x="188" y="184" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="600" fill="#f8fafc">platform-n8n</text>
+  <text x="188" y="210" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#94a3b8">shared n8n � kit stays decoupled</text>
+
+  <rect x="48" y="258" width="280" height="88" rx="12" fill="#232a35" stroke="#475569" stroke-width="1.5"/>
+  <text x="188" y="292" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">doc � ecom � crm</text>
+  <text x="188" y="318" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#94a3b8">portfolio verticals � thin adapters</text>
+
+  <rect x="48" y="366" width="280" height="100" rx="12" fill="#1a1f28" stroke="#f59e0b" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="188" y="404" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="600" fill="#fde68a">+ ordinary apps</text>
+  <text x="188" y="428" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#94a3b8">WP SME pilot on the same net</text>
+  <text x="188" y="450" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="11" fill="#78716c">logs + /obs-health � not a fake universal plug</text>
+
+  <!-- CENTER -->
+  <rect x="400" y="150" width="480" height="380" rx="18" fill="#1e2530" stroke="#2dd4bf" stroke-width="2.5"/>
+  <rect x="420" y="168" width="200" height="28" rx="8" fill="#134e4a"/>
+  <text x="520" y="187" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="12" font-weight="600" fill="#5eead4">Install ? deep wire-in</text>
+
+  <text x="640" y="230" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="700" fill="#f8fafc">OBS Quality Kit</text>
+  <text x="640" y="258" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#94a3b8">bootstrap � contract � smoke</text>
+
+  <g font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#e2e8f0">
+    <circle cx="460" cy="310" r="4" fill="#2dd4bf"/>
+    <text x="478" y="315">Optional profiles: base � metrics � loki � langfuse</text>
+    <circle cx="460" cy="348" r="4" fill="#2dd4bf"/>
+    <text x="478" y="353">Smart preflight: Docker � ports � disk</text>
+    <circle cx="460" cy="386" r="4" fill="#2dd4bf"/>
+    <text x="478" y="391">Scheme B IDs � shadow quality gate</text>
+    <circle cx="460" cy="424" r="4" fill="#2dd4bf"/>
+    <text x="478" y="429">UI bind 127.0.0.1 by default</text>
+    <circle cx="460" cy="462" r="4" fill="#f59e0b"/>
+    <text x="478" y="467">Ties platform + verticals + WP pilot</text>
+  </g>
+
+  <!-- RIGHT -->
+  <text x="980" y="130" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="600" fill="#64748b" letter-spacing="1.5">OBSERVABILITY STATION</text>
+
+  <rect x="960" y="150" width="260" height="52" rx="10" fill="#232a35" stroke="#475569"/>
+  <text x="1090" y="182" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#f8fafc">OpenTelemetry Collector</text>
+
+  <rect x="960" y="218" width="260" height="52" rx="10" fill="#232a35" stroke="#2dd4bf"/>
+  <text x="1090" y="250" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#f8fafc">Jaeger � search by trace_id</text>
+
+  <rect x="960" y="286" width="260" height="52" rx="10" fill="#232a35" stroke="#2dd4bf"/>
+  <text x="1090" y="318" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#f8fafc">Grafana + Prometheus</text>
+
+  <rect x="960" y="354" width="260" height="52" rx="10" fill="#232a35" stroke="#f59e0b" stroke-dasharray="5 4"/>
+  <text x="1090" y="386" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#fde68a">Loki (optional Addon)</text>
+
+  <rect x="960" y="422" width="260" height="52" rx="10" fill="#232a35" stroke="#f59e0b" stroke-dasharray="5 4"/>
+  <text x="1090" y="454" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#fde68a">Langfuse (optional Addon)</text>
+
+  <path d="M328,194 H390" stroke="#2dd4bf" stroke-width="2" fill="none" marker-end="url(#arrowTeal)"/>
+  <path d="M328,302 H390" stroke="#2dd4bf" stroke-width="2" fill="none" marker-end="url(#arrowTeal)"/>
+  <path d="M328,416 H390" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#arrowAmber)"/>
+
+  <path d="M880,176 H950" stroke="#2dd4bf" stroke-width="2" fill="none" marker-end="url(#arrowTeal)"/>
+  <path d="M880,244 H950" stroke="#2dd4bf" stroke-width="2" fill="none" marker-end="url(#arrowTeal)"/>
+  <path d="M880,312 H950" stroke="#2dd4bf" stroke-width="2" fill="none" marker-end="url(#arrowTeal)"/>
+  <path d="M880,380 H950" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#arrowAmber)"/>
+  <path d="M880,448 H950" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#arrowAmber)"/>
+
+  <text x="640" y="580" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#94a3b8">Solid = shipped in my stack � Dashed = optional Addon / ordinary-app pilot</text>
+  <text x="640" y="610" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#64748b">One kit � many verticals � not a cheap dump of every OBS binary</text>
+  <text x="640" y="660" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#475569">assets/demo/architecture-obs-kit.svg � P2-8 film hero</text>
+</svg>

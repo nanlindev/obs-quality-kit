@@ -1,0 +1,82 @@
+# OBS Quality Kit — engineering profile registry (PRD §6.1 / §18.1)
+# Commerce = Base Gig + Addons (separate); do not 1:1 map SKU names to these profiles.
+#
+# Stage 0: skeleton only. Stage 1+ fills preflight/smoke; Stage 2+ adds compose fragments.
+
+version: 1
+
+compose:
+  project_name: obs-quality-kit
+  label_prefix: com.obsquality.kit
+  # Root compose file (wrapper → docker/compose.yml)
+  file: docker/compose.yml
+
+networks:
+  # Required for OTEL / Jaeger / Langfuse / future kit metrics scrape targets
+  required:
+    - name: proxy_network
+      created_by: platform-n8n/scripts/ensure-networks.sh
+  # Optional until L3 facade / n8n sidecar demos need it
+  optional:
+    - name: n8n_platform
+      created_by: platform-n8n/scripts/ensure-networks.sh
+
+sibling_stacks:
+  otel-collector-stack:
+    env_path_key: OTEL_STACK_PATH
+    default_path: ../otel-collector-stack
+  jaeger-stack:
+    env_path_key: JAEGER_STACK_PATH
+    default_path: ../jaeger-stack
+  langfuse-stack:
+    env_path_key: LANGFUSE_STACK_PATH
+    default_path: ../langfuse-stack
+
+profiles:
+  base:
+    description: OTEL Collector + Jaeger (Base Gig; always on)
+    extends: []
+    orchestrates:
+      - otel-collector-stack
+      - jaeger-stack
+    compose_fragments: []
+    status: stage1
+
+  metrics:
+    description: base + Grafana + Prometheus + cAdvisor (kit-owned; G+P bound)
+    extends:
+      - base
+    orchestrates: []
+    compose_fragments:
+      - profiles/metrics/compose.yml
+    status: stage2
+
+  langfuse:
+    description: base + Langfuse (orchestrates existing langfuse-stack)
+    extends:
+      - base
+    orchestrates:
+      - langfuse-stack
+    compose_fragments: []
+    status: stage3
+
+  full:
+    description: base + metrics + langfuse (portfolio demo; avoid long-term on 8GB hosts)
+    extends:
+      - metrics
+      - langfuse
+    orchestrates: []
+    compose_fragments: []
+    status: stage3
+
+  loki:
+    description: base + kit-owned Loki + Promtail (standalone; may co-run with metrics; not in full)
+    extends:
+      - base
+    orchestrates: []
+    compose_fragments:
+      - profiles/loki/compose.yml
+    status: p2
+
+# Reserved L1 slots (future). Unregistered profile name = handbook upgrade/custom.
+reserved_slots: []

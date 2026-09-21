@@ -1,0 +1,47 @@
+# Local bootstrap state / rendered compose (never commit)
+.obs-kit/
+
+# Secrets / local env
+.env
+.env.local
+.env.prod
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+.venv-*/
+venv/
+env/
+*.egg-info/
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDE / agent
+.vscode/
+.idea/
+.cursor/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / local runtime
+*.log
+.tmp/
+tmp/
+
+# Demo capture (Phase-2 video assets stay untracked until intentional)
+assets/raw/
+assets/**/*.mp4
+assets/**/*.mov
+*.mov

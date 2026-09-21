@@ -1,0 +1,20 @@
+name: CI smoke (static)
+
+# File-archive kit: static smokes only — no Docker / server / secrets.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  static-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: smoke_kit_p2 --static-only
+        run: python3 scripts/smoke_kit_p2.py --static-only

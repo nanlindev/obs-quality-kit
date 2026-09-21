@@ -1,0 +1,19 @@
+# Default scrape: Prometheus self + cAdvisor (container-level metrics).
+# Scope is intentionally narrow — see docs/*/METRICS.md (Review-2).
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: cadvisor
+    static_configs:
+      - targets: ["cadvisor:8080"]
+
+  - job_name: docker-name-map
+    static_configs:
+      - targets: ["docker-name-map:9101"]

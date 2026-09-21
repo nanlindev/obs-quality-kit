@@ -1,0 +1,26 @@
+# OBS Quality Kit — compose project
+# Project name / labels must stay unique vs platform-n8n, *-workflow, and sibling OBS stacks.
+# Metrics services: profiles/metrics/compose.yml (merged via bootstrap `-f`, compose profile metrics).
+name: obs-quality-kit
+
+networks:
+  proxy_network:
+    external: true
+    name: proxy_network
+  n8n_platform:
+    external: true
+    name: n8n_platform
+
+# Optional scaffold: documents kit labels; enable with --profile scaffold only.
+services:
+  kit_scaffold:
+    image: busybox:1.36.1
+    profiles: ["scaffold"]
+    command: ["true"]
+    labels:
+      com.obsquality.kit: "true"
+      com.obsquality.kit.component: "scaffold"
+      com.obsquality.kit.stage: "0"
+    networks:
+      - proxy_network
+      - n8n_platform

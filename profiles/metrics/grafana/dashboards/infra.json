@@ -1,0 +1,82 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [
+        {
+          "expr": "sum by (cname) (\n  label_replace(\n    rate(container_cpu_usage_seconds_total{name!=\"\",id=~\"/docker/.+\"}[5m]),\n    \"cid\", \"$1\", \"name\", \"(.+)\"\n  )\n  * on (cid) group_left (cname)\n  label_replace(docker_container_name_info, \"cid\", \"$1\", \"id\", \"(.+)\")\n)",
+          "legendFormat": "{{cname}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Container CPU (rate)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "targets": [
+        {
+          "expr": "sum by (cname) (\n  label_replace(\n    container_memory_usage_bytes{name!=\"\",id=~\"/docker/.+\"},\n    \"cid\", \"$1\", \"name\", \"(.+)\"\n  )\n  * on (cid) group_left (cname)\n  label_replace(docker_container_name_info, \"cid\", \"$1\", \"id\", \"(.+)\")\n)",
+          "legendFormat": "{{cname}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Container memory",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 8 },
+      "id": 3,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "expr": "count(up == 1)",
+          "legendFormat": "up targets",
+          "refId": "A"
+        }
+      ],
+      "title": "Prometheus scrape targets up",
+      "type": "stat"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["obs-quality-kit", "infra"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "OBS Kit — Infra (containers)",
+  "uid": "obs-kit-infra",
+  "version": 2
+}

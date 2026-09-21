@@ -1,0 +1,68 @@
+# OBS Kit WP SME pilot — WordPress + MySQL (no n8n, no Woo).
+# Local-only demo of attaching an ordinary WordPress marketing site to the kit network + Loki.
+#
+# Prerequisite: ../platform-n8n/scripts/ensure-networks.sh
+#                obs-quality-kit: ./scripts/bootstrap.sh up --profile loki  (for log proof)
+#
+# UI: http://127.0.0.1:8087
+# Health: http://127.0.0.1:8087/obs-health
+
+name: obs-kit-wp-sme
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+      MYSQL_ROOT_PASSWORD: rootpass_local_only
+    volumes:
+      - wp_sme_db:/var/lib/mysql
+    networks:
+      - proxy_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpass_local_only"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    labels:
+      com.obsquality.kit.pilot: "wp-sme"
+      com.obsquality.kit.component: "wp-sme-db"
+
+  wordpress:
+    image: wordpress:6.6.2-php8.2-apache
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${OBS_UI_BIND:-127.0.0.1}:${WP_SME_PORT:-8087}:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+      # Optional gate override (default shadow in mu-plugin)
+      OBS_QUALITY_GATE_MODE: ${OBS_QUALITY_GATE_MODE:-shadow}
+    volumes:
+      - wp_sme_data:/var/www/html
+      - ./mu-plugins:/var/www/html/wp-content/mu-plugins:ro
+      # Real path → Apache serves without WP rewrite / install redirect
+      - ./obs-health:/var/www/html/obs-health:ro
+    networks:
+      - proxy_network
+    labels:
+      com.obsquality.kit.pilot: "wp-sme"
+      com.obsquality.kit.component: "wp-sme-wordpress"
+
+volumes:
+  wp_sme_db:
+  wp_sme_data:
+
+networks:
+  proxy_network:
+    external: true
+    name: proxy_network

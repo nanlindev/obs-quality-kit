@@ -1,0 +1,42 @@
+name: Sync obs-quality-kit to server (archive only)
+
+# Purpose: mirror repo files onto the demo host. Does NOT write .env,
+# bootstrap stacks, or start containers.
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: deploy
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -euo pipefail
+            PROJECT_DIR="/home/deploy/projects/obs-quality-kit"
+            REPO_URL="https://github.com/nanlindev/obs-quality-kit.git"
+
+            if [ ! -d "$PROJECT_DIR/.git" ]; then
+              echo "First sync: cloning into $PROJECT_DIR ..."
+              mkdir -p "$(dirname "$PROJECT_DIR")"
+              if [ -d "$PROJECT_DIR" ] && [ -n "$(ls -A "$PROJECT_DIR" 2>/dev/null || true)" ]; then
+                echo "ERROR: $PROJECT_DIR exists, is not a git repo, and is not empty"
+                exit 1
+              fi
+              if [ -d "$PROJECT_DIR" ]; then
+                rmdir "$PROJECT_DIR" 2>/dev/null || true
+              fi
+              git clone "$REPO_URL" "$PROJECT_DIR"
+            fi
+
+            cd "$PROJECT_DIR"
+            echo "Fetching origin/main ..."
+            git fetch origin main
+            git reset --hard origin/main
+            echo "Synced to $(git rev-parse --short HEAD) (archive only — no env / no services)"

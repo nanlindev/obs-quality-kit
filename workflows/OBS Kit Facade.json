@@ -1,0 +1,231 @@
+{
+  "name": "OBS Kit Facade",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567001",
+      "name": "Manual Run",
+      "notes": "Portfolio entry: run once to exercise Scheme B IDs + health probe. Not the doc golden path.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "obs-kit-facade",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        220
+      ],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567002",
+      "name": "Webhook Entry",
+      "notes": "Optional HTTP entry: POST /webhook/obs-kit-facade (or test URL). No credentials required.",
+      "notesInFlow": true,
+      "webhookId": "obs-kit-facade-entry"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Scheme B IDs (L2 contract). Sidecars may attach a real OTEL trace_id later.\nconst crypto = require('crypto');\nconst raw = ($input.first() && $input.first().json) || {};\nconst nested = raw.body && typeof raw.body === 'object' ? raw.body : {};\nconst headers = raw.headers || {};\nconst incoming = (\n  nested.correlation_id ||\n  raw.correlation_id ||\n  headers['x-correlation-id'] ||\n  headers['X-Correlation-Id'] ||\n  ''\n).toString().trim();\nlet correlation_id = crypto.randomUUID();\nif (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(incoming)) {\n  correlation_id = incoming.toLowerCase();\n}\nconst trace_id = crypto.randomBytes(16).toString('hex');\nconst span_id = crypto.randomBytes(8).toString('hex');\nconst traceparent = `00-${trace_id}-${span_id}-01`;\nconst health_url =\n  (typeof $env !== 'undefined' && $env.OBS_FACADE_HEALTH_URL) ||\n  'http://doc_python_ai:8001/health';\nconst gate_mode =\n  (typeof $env !== 'undefined' && $env.OBS_QUALITY_GATE_MODE) || 'shadow';\nreturn [{\n  json: {\n    correlation_id,\n    trace_id,\n    traceparent,\n    gate_mode,\n    health_url,\n    facade: 'obs-kit',\n  },\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        100
+      ],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567003",
+      "name": "Build Scheme B IDs",
+      "notes": "Allocates correlation_id + demo trace_id/traceparent. Gate defaults to shadow (L2).",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.health_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Correlation-Id",
+              "value": "={{ $json.correlation_id }}"
+            },
+            {
+              "name": "traceparent",
+              "value": "={{ $json.traceparent }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        560,
+        100
+      ],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567004",
+      "name": "GET Health",
+      "notes": "Thin probe only. Override URL via env OBS_FACADE_HEALTH_URL. Default: doc sidecar /health on n8n_platform.",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const prev = $('Build Scheme B IDs').item.json || {};\nconst res = $input.item.json || {};\nconst status = res.statusCode || res.status || null;\nconst body = res.body && typeof res.body === 'object' ? res.body : res;\nconst ok = status === 200 || body.status === 'ok' || body.status === 'healthy' || body.ok === true;\nreturn {\n  ok: Boolean(ok),\n  facade: 'obs-kit',\n  correlation_id: prev.correlation_id,\n  trace_id: prev.trace_id,\n  traceparent: prev.traceparent,\n  gate_mode: prev.gate_mode || 'shadow',\n  health_url: prev.health_url,\n  health_status_code: status,\n  health: body,\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        20
+      ],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567005",
+      "name": "Format Success",
+      "notes": "Merge Scheme B IDs with health payload for the canvas / webhook response."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const prev = $('Build Scheme B IDs').item.json || {};\nconst item = $input.item.json || {};\nconst errorMessage =\n  item.error?.message ||\n  item.message ||\n  item.error_message ||\n  'Health request failed';\nreturn {\n  ok: false,\n  facade: 'obs-kit',\n  correlation_id: prev.correlation_id,\n  trace_id: prev.trace_id,\n  traceparent: prev.traceparent,\n  gate_mode: prev.gate_mode || 'shadow',\n  health_url: prev.health_url,\n  error_message: String(errorMessage).slice(0, 500),\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        200
+      ],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567006",
+      "name": "Format Health Error",
+      "notes": "Wired error output from GET Health — no dangling error port (Review-5)."
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        100
+      ],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567007",
+      "name": "Facade Done",
+      "notes": "End. Does not call Doc Process / Post — vertical golden path stays in doc-workflow."
+    }
+  ],
+  "connections": {
+    "Manual Run": {
+      "main": [
+        [
+          {
+            "node": "Build Scheme B IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Entry": {
+      "main": [
+        [
+          {
+            "node": "Build Scheme B IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Scheme B IDs": {
+      "main": [
+        [
+          {
+            "node": "GET Health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Health": {
+      "main": [
+        [
+          {
+            "node": "Format Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Health Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Success": {
+      "main": [
+        [
+          {
+            "node": "Facade Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Health Error": {
+      "main": [
+        [
+          {
+            "node": "Facade Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "obs-kit-facade-v1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "obs-quality-kit"
+  },
+  "tags": [
+    {
+      "name": "obs-quality-kit"
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+# Kit-owned metrics stack (compose profile: metrics)
+# Started via: docker compose -f profiles/metrics/compose.yml --profile metrics
+# Project: obs-quality-kit-metrics (separate from loki — never share + --remove-orphans)
+# Review-2: cAdvisor mounts docker.sock — see docs/*/METRICS.md
+
+name: obs-quality-kit-metrics
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    profiles: ["metrics"]
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - obs_kit_prometheus_data:/prometheus
+    ports:
+      - "${OBS_UI_BIND:-127.0.0.1}:${OBS_PROMETHEUS_PORT:-9090}:9090"
+    networks:
+      - proxy_network
+    labels:
+      com.obsquality.kit: "true"
+      com.obsquality.kit.component: "prometheus"
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    profiles: ["metrics"]
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-changeme_override_in_env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_HTTP_PORT: "3000"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - obs_kit_grafana_data:/var/lib/grafana
+    ports:
+      - "${OBS_UI_BIND:-127.0.0.1}:${OBS_GRAFANA_PORT:-3001}:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - proxy_network
+    labels:
+      com.obsquality.kit: "true"
+      com.obsquality.kit.component: "grafana"
+
+  # OrbStack/cAdvisor often exports name=<container-id>. This tiny exporter
+  # maps id→Docker Names for Grafana legend joins (see infra.json PromQL).
+  docker-name-map:
+    image: python:3.12-alpine
+    profiles: ["metrics"]
+    restart: unless-stopped
+    command: ["python", "/app/exporter.py"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./docker_name_map/exporter.py:/app/exporter.py:ro
+    networks:
+      - proxy_network
+    labels:
+      com.obsquality.kit: "true"
+      com.obsquality.kit.component: "docker-name-map"
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    profiles: ["metrics"]
+    restart: unless-stopped
+    privileged: true
+    # OrbStack / containerd-snapshotter: Docker factory dies on missing
+    # /var/lib/docker/image/overlayfs/layerdb/mounts/*/mount-id → No data in Grafana.
+    # Prefer embedded containerd (moby ns); keep docker.sock mounted for lab docs only.
+    command:
+      - "--housekeeping_interval=30s"
+      - "--enable_metrics=cpu,memory,network"
+      - "--containerd=/run/containerd/containerd.sock"
+      - "--containerd-namespace=moby"
+      - "--docker=unix:///var/run/docker-disabled.sock"
+    volumes:
+      # Docker socket: lab inventory / docs; not used by cadvisor command above.
+      # Risk → docs/*/METRICS.md (Review-2).
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # OrbStack + modern Docker Engine embed containerd here:
+      - /run/docker/containerd/containerd.sock:/run/containerd/containerd.sock:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - "${OBS_UI_BIND:-127.0.0.1}:${OBS_CADVISOR_PORT:-8088}:8080"
+    networks:
+      - proxy_network
+    labels:
+      com.obsquality.kit: "true"
+      com.obsquality.kit.component: "cadvisor"
+
+volumes:
+  # Pin legacy names so renaming the compose project does not orphan prior TSDB/Grafana data.
+  obs_kit_prometheus_data:
+    name: obs-quality-kit_obs_kit_prometheus_data
+  obs_kit_grafana_data:
+    name: obs-quality-kit_obs_kit_grafana_data
+
+networks:
+  proxy_network:
+    external: true
+    name: proxy_network
